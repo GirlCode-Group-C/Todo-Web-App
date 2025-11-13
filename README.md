@@ -137,7 +137,7 @@ This project is open-source and available under the **MIT License**.
 Developed by **GirlCode Group C** 💪
 - Zida Longane
 - Celestial Mpulo
-- Nomthandazo
+- Noluthando
 - Sinazo
 
 > Empowering women in tech through collaborative learning and innovation.
