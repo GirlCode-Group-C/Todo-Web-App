@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Task Templates</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            background: #ffffff;
+            text-align: center;
+        }
+        h1 {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        p.subtitle {
+            margin-top: 0;
+            color: #555;
+        }
+        .grid {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+        .card {
+            width: 300px;
+            background: #caf0f8; /* secondary light */
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            text-align: left;
+        }
+        .card-header {
+            background: #023e8a; /* primary dark */
+            color: white;
+            padding: 10px 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            margin: -20px -20px 16px -20px;
+            font-size: 18px;
+        }
+        .task-input {
+            width: 100%;
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 8px;
+            border: 1px solid #999;
+            box-sizing: border-box;
+        }
+        .hint {
+            font-size: 11px;
+            color: #555;
+            margin-top: 4px;
+        }
+        .add-text {
+            font-size: 12px;
+            color: #0077b6;
+            margin-top: 4px;
+        }
+        .suggestions-title {
+            margin-top: 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .suggestions-list {
+            font-size: 12px;
+            color: #333;
+            margin: 2px 0;
+        }
+        .btn {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .btn-save {
+            background: #0077b6; /* primary light */
+            color: white;
+        }
+        .btn-save:hover {
+            background: #023e8a; /* primary dark */
+        }
+        .btn-continue {
+            background: #ade8f4; /* secondary dark */
+            color: #023e8a;
+            font-size: 16px;
+            padding: 10px 30px;
+            margin-top: 40px;
+        }
+        .btn-continue:hover {
+            filter: brightness(0.95);
+        }
+        .continue-wrapper {
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Please Populate and Save</h1>
+<p class="subtitle">
+    Add reusable tasks for each selected category. These will be available on your dashboard later.
+</p>
+
+<div class="grid">
+
+    {# PERSONAL CARD #}
+    {% if 'personal' in selected_categories %}
+    <form class="card" method="post">
+        {% csrf_token %}
+        <div class="card-header">Personal Tasks</div>
+
+        <div class="hint">Enter one task per line / field:</div>
+
+        <!-- Multiple task fields for personal -->
+        <input class="task-input" type="text" name="personal_tasks" placeholder="e.g. Gym">
+        <input class="task-input" type="text" name="personal_tasks" placeholder="e.g. Morning run">
+        <input class="task-input" type="text" name="personal_tasks" placeholder="e.g. Buy groceries">
+        <input class="task-input" type="text" name="personal_tasks" placeholder="Add more...">
+        <input class="task-input" type="text" name="personal_tasks" placeholder="Add more...">
+
+        <div class="add-text">Leave empty fields blank if not needed.</div>
+
+        {% if personal_templates %}
+            <div class="suggestions-title">Suggestions:</div>
+            {% for t in personal_templates %}
+                <div class="suggestions-list">• {{ t.name }}</div>
+            {% endfor %}
+        {% else %}
+            <div class="suggestions-title">Suggestions:</div>
+            <div class="suggestions-list">No personal tasks saved yet.</div>
+        {% endif %}
+
+        <button class="btn btn-save" type="submit" name="save_personal">Save Personal Tasks</button>
+    </form>
+    {% endif %}
+
+    {# SCHOOL CARD #}
+    {% if 'school' in selected_categories %}
+    <form class="card" method="post">
+        {% csrf_token %}
+        <div class="card-header">School Tasks</div>
+
+        <div class="hint">Enter one task per line / field:</div>
+
+        <input class="task-input" type="text" name="school_tasks" placeholder="e.g. Study Chapter 4">
+        <input class="task-input" type="text" name="school_tasks" placeholder="e.g. Finish assignment">
+        <input class="task-input" type="text" name="school_tasks" placeholder="e.g. Group project meeting">
+        <input class="task-input" type="text" name="school_tasks" placeholder="Add more...">
+        <input class="task-input" type="text" name="school_tasks" placeholder="Add more...">
+
+        <div class="add-text">Leave empty fields blank if not needed.</div>
+
+        {% if school_templates %}
+            <div class="suggestions-title">Suggestions:</div>
+            {% for t in school_templates %}
+                <div class="suggestions-list">• {{ t.name }}</div>
+            {% endfor %}
+        {% else %}
+            <div class="suggestions-title">Suggestions:</div>
+            <div class="suggestions-list">No school tasks saved yet.</div>
+        {% endif %}
+
+        <button class="btn btn-save" type="submit" name="save_school">Save School Tasks</button>
+    </form>
+    {% endif %}
+
+    {# WORK CARD #}
+    {% if 'work' in selected_categories %}
+    <form class="card" method="post">
+        {% csrf_token %}
+        <div class="card-header">Work Tasks</div>
+
+        <div class="hint">Enter one task per line / field:</div>
+
+        <input class="task-input" type="text" name="work_tasks" placeholder="e.g. Meeting with Sean">
+        <input class="task-input" type="text" name="work_tasks" placeholder="e.g. Prepare slides">
+        <input class="task-input" type="text" name="work_tasks" placeholder="e.g. Send report">
+        <input class="task-input" type="text" name="work_tasks" placeholder="Add more...">
+        <input class="task-input" type="text" name="work_tasks" placeholder="Add more...">
+
+        <div class="add-text">Leave empty fields blank if not needed.</div>
+
+        {% if work_templates %}
+            <div class="suggestions-title">Suggestions:</div>
+            {% for t in work_templates %}
+                <div class="suggestions-list">• {{ t.name }}</div>
+            {% endfor %}
+        {% else %}
+            <div class="suggestions-title">Suggestions:</div>
+            <div class="suggestions-list">No work tasks saved yet.</div>
+        {% endif %}
+
+        <button class="btn btn-save" type="submit" name="save_work">Save Work Tasks</button>
+    </form>
+    {% endif %}
+
+</div>
+
+<div class="continue-wrapper">
+    <form method="post">
+        {% csrf_token %}
+        <button class="btn btn-continue" type="submit" name="continue">Continue</button>
+    </form>
+</div>
+
+</body>
+</html>
