@@ -5,6 +5,9 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 from datetime import date, timedelta
 
+def landing_page(request):
+    return render(request, 'todo/landing.html')
+
 
 def dashboard(request):
     today = date.today()
