@@ -129,7 +129,6 @@
             height: 100%;
             background: rgba(0,0,0,0.5);
             backdrop-filter: blur(5px);
-            display: flex;
             justify-content: center;
             align-items: center;
             z-index: 1000;
@@ -453,9 +452,14 @@
         // ----------------------
         // Sidebar Todo Cards
         // ----------------------
+        document.querySelectorAll('.todo-card').forEach(card => {
+            card.addEventListener('mousedown', e => e.preventDefault());
+        });
+
         function rebindTodoCardClickHandlers() {
             document.querySelectorAll('.todo-card').forEach(card => {
                 card.onclick = () => {
+                if(!card.dataset.id) return
                     const todo = {
                         id: card.dataset.id,
                         title: card.dataset.title,
