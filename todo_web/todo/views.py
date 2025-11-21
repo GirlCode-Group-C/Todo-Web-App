@@ -4,7 +4,7 @@ from .models import TaskTemplate, Todo
 
 
 # -----------------------------
-# LANDING PAGE (teammate's page)
+# LANDING PAGE (Noluthando's page)
 # -----------------------------
 def landing_page(request):
     if request.method == 'POST':
