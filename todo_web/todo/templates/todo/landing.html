@@ -4,34 +4,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to Multi-purpose To do</title>
+    <title>Get Organized & Get More Done</title>
     <link rel="stylesheet" type="text/css" href="{% static 'todo/landing.css' %}">
+    <script>
+        function validateForm() {
+            const personal = document.getElementById('personal').checked;
+            const school = document.getElementById('school').checked;
+            const work = document.getElementById('work').checked;
+            
+            if (!personal && !school && !work) {
+                alert('Please select at least one category!');
+                return false;
+            }
+            return true;
+        }
+    </script>
 </head>
 <body>
     <div class="container">
-        <h1>Welcome to Multi-purpose To do</h1>
+        <h1>👋 Welcome! Get Organized & Get More Done.</h1>
         
-        <div class="category-options">
-            <div class="checkbox-group">
-                <input type="checkbox" id="personal" name="category" value="personal">
-                <label for="personal">Personal To do</label>
+        <p class="subheading">
+            Your ultimate productivity hub. We help you effortlessly separate, prioritize, and conquer tasks across all parts of your life.
+        </p>
+
+        <p class="instruction">
+            ➡️ Tell us what kind of tasks you need to manage. You can always change this later!
+        </p>
+
+        {% if error_message %}
+        <div class="error-message">
+            <p>⚠️ {{ error_message }}</p>
+        </div>
+        {% endif %}
+        
+        <form method="POST" onsubmit="return validateForm()">
+            {% csrf_token %}
+            <div class="category-options">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="personal" name="personal" value="personal">
+                    <label for="personal">Personal To do</label>
+                </div>
+                
+                <div class="checkbox-group">
+                    <input type="checkbox" id="school" name="school" value="school">
+                    <label for="school">School To do</label>
+                </div>
+                
+                <div class="checkbox-group">
+                    <input type="checkbox" id="work" name="work" value="work">
+                    <label for="work">Work To do</label>
+                </div>
             </div>
             
-            <div class="checkbox-group">
-                <input type="checkbox" id="school" name="category" value="school">
-                <label for="school">School To do</label>
+            <div class="button-group">
+                <button type="submit" class="btn-continue">Let's Get Started!</button>
+                <a href="/dashboard/" style="text-decoration: none;">
+                    <button type="button" class="btn-skip">Go Straight to Dashboard</button>
+                </a>
             </div>
-            
-            <div class="checkbox-group">
-                <input type="checkbox" id="work" name="category" value="work">
-                <label for="work">Work To do</label>
-            </div>
-        </div>
-        
-        <div class="button-group">
-            <button type="button" class="btn-continue">Continue</button>
-            <button type="button" class="btn-skip">Skip to Home</button>
-        </div>
+        </form>
     </div>
 </body>
 </html>
