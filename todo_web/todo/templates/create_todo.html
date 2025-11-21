@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Task Templates</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 0;
+            margin: 0;
+            background: #ffffff;
+        }
+
+        /* Header & Sidebar */
+        .app-header {
+            background: #023e8a;
+            color: #ffffff;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .app-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .hamburger {
+            font-size: 22px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+            z-index: 9;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 240px;
+            height: 100%;
+            background: #ffffff;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+            transform: translateX(-260px);
+            transition: transform 0.2s ease-out;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-header {
+            padding: 14px 16px;
+            background: #023e8a;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sidebar-close {
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .sidebar-menu {
+            padding: 10px 0;
+        }
+        .sidebar-link {
+            display: block;
+            padding: 10px 18px;
+            text-decoration: none;
+            color: #023e8a;
+            font-size: 14px;
+        }
+        .sidebar-link:hover {
+            background: #e0f2ff;
+        }
+        .sidebar-open .sidebar-overlay {
+            display: block;
+        }
+        .sidebar-open .sidebar {
+            transform: translateX(0);
+        }
+
+        /* Page content */
+        .page-wrapper {
+            padding: 40px 40px 60px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        p.subtitle {
+            margin-top: 0;
+            color: #555;
+        }
+        .grid {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+        .card {
+            width: 300px;
+            background: #caf0f8;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            text-align: left;
+        }
+        .card-header {
+            background: #023e8a;
+            color: white;
+            padding: 10px 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            margin: -20px -20px 16px -20px;
+            font-size: 18px;
+        }
+        .task-input {
+            width: 100%;
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 8px;
+            border: 1px solid #999;
+            box-sizing: border-box;
+        }
+        .hint {
+            font-size: 11px;
+            color: #555;
+            margin-top: 4px;
+        }
+        .suggestions-title {
+            margin-top: 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .suggestions-list {
+            font-size: 12px;
+            color: #333;
+            margin: 2px 0;
+        }
+        .btn {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .btn-save {
+            background: #0077b6;
+            color: white;
+        }
+        .btn-save:hover {
+            background: #023e8a;
+        }
+        .btn-continue {
+            background: #ade8f4;
+            color: #023e8a;
+            font-size: 16px;
+            padding: 10px 30px;
+            margin-top: 40px;
+        }
+        .btn-continue:hover {
+            filter: brightness(0.95);
+        }
+        .continue-wrapper {
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+
+<header class="app-header">
+    <div class="app-title">Todo Web App</div>
+    <div class="hamburger" onclick="toggleSidebar()">≡</div>
+</header>
+
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <span>Menu</span>
+        <span class="sidebar-close" onclick="toggleSidebar()">✕</span>
+    </div>
+    <div class="sidebar-menu">
+        <!-- Adjust URLs/names once your real dashboard route exists -->
+        <a class="sidebar-link" href="{% url 'home' %}">Dashboard</a>
+        <a class="sidebar-link" href="{% url 'create_todo' %}">Create Todo Suggestions</a>
+        <a class="sidebar-link" href="{% url 'schedule_todo' %}">Todo Calendar / Schedule</a>
+    </div>
+</nav>
+
+<div class="page-wrapper">
+    <h1>Please Populate and Save</h1>
+    <p class="subtitle">
+        Add reusable tasks for each selected category. These will be suggested later on the calendar page.
+    </p>
+
+    <div class="grid">
+
+        {% if 'personal' in selected_categories %}
+        <form class="card" method="post">
+            {% csrf_token %}
+            <div class="card-header">Personal Tasks</div>
+
+            <div class="hint">Enter one task per field:</div>
+
+            <input class="task-input" type="text" name="personal_tasks" placeholder="e.g. Gym">
+            <input class="task-input" type="text" name="personal_tasks" placeholder="e.g. Morning run">
+            <input class="task-input" type="text" name="personal_tasks" placeholder="e.g. Buy groceries">
+            <input class="task-input" type="text" name="personal_tasks" placeholder="Add more...">
+            <input class="task-input" type="text" name="personal_tasks" placeholder="Add more...">
+
+            <div class="hint">Leave unused fields empty.</div>
+
+            {% if personal_templates %}
+                <div class="suggestions-title">Existing Personal Suggestions:</div>
+                {% for t in personal_templates %}
+                    <div class="suggestions-list">• {{ t.name }}</div>
+                {% endfor %}
+            {% else %}
+                <div class="suggestions-title">Existing Personal Suggestions:</div>
+                <div class="suggestions-list">None yet.</div>
+            {% endif %}
+
+            <button class="btn btn-save" type="submit" name="save_personal">Save Personal Tasks</button>
+        </form>
+        {% endif %}
+
+        {% if 'school' in selected_categories %}
+        <form class="card" method="post">
+            {% csrf_token %}
+            <div class="card-header">School Tasks</div>
+
+            <div class="hint">Enter one task per field:</div>
+
+            <input class="task-input" type="text" name="school_tasks" placeholder="e.g. Study Maths">
+            <input class="task-input" type="text" name="school_tasks" placeholder="e.g. Submit assignment">
+            <input class="task-input" type="text" name="school_tasks" placeholder="e.g. Group project">
+            <input class="task-input" type="text" name="school_tasks" placeholder="Add more...">
+            <input class="task-input" type="text" name="school_tasks" placeholder="Add more...">
+
+            <div class="hint">Leave unused fields empty.</div>
+
+            {% if school_templates %}
+                <div class="suggestions-title">Existing School Suggestions:</div>
+                {% for t in school_templates %}
+                    <div class="suggestions-list">• {{ t.name }}</div>
+                {% endfor %}
+            {% else %}
+                <div class="suggestions-title">Existing School Suggestions:</div>
+                <div class="suggestions-list">None yet.</div>
+            {% endif %}
+
+            <button class="btn btn-save" type="submit" name="save_school">Save School Tasks</button>
+        </form>
+        {% endif %}
+
+        {% if 'work' in selected_categories %}
+        <form class="card" method="post">
+            {% csrf_token %}
+            <div class="card-header">Work Tasks</div>
+
+            <div class="hint">Enter one task per field:</div>
+
+            <input class="task-input" type="text" name="work_tasks" placeholder="e.g. Meeting with Sean">
+            <input class="task-input" type="text" name="work_tasks" placeholder="e.g. Send report">
+            <input class="task-input" type="text" name="work_tasks" placeholder="e.g. Prepare slides">
+            <input class="task-input" type="text" name="work_tasks" placeholder="Add more...">
+            <input class="task-input" type="text" name="work_tasks" placeholder="Add more...">
+
+            <div class="hint">Leave unused fields empty.</div>
+
+            {% if work_templates %}
+                <div class="suggestions-title">Existing Work Suggestions:</div>
+                {% for t in work_templates %}
+                    <div class="suggestions-list">• {{ t.name }}</div>
+                {% endfor %}
+            {% else %}
+                <div class="suggestions-title">Existing Work Suggestions:</div>
+                <div class="suggestions-list">None yet.</div>
+            {% endif %}
+
+            <button class="btn btn-save" type="submit" name="save_work">Save Work Tasks</button>
+        </form>
+        {% endif %}
+
+    </div>
+
+    <div class="continue-wrapper">
+        <form method="post">
+            {% csrf_token %}
+            <button class="btn btn-continue" type="submit" name="continue">Continue</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleSidebar() {
+        document.body.classList.toggle("sidebar-open");
+    }
+</script>
+
+</body>
+</html>

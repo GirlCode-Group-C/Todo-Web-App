@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Schedule Todos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 0;
+            margin: 0;
+            background: #ffffff;
+        }
+
+        /* Header & Sidebar */
+        .app-header {
+            background: #023e8a;
+            color: #ffffff;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .app-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .hamburger {
+            font-size: 22px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+            z-index: 9;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 240px;
+            height: 100%;
+            background: #ffffff;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+            transform: translateX(-260px);
+            transition: transform 0.2s ease-out;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-header {
+            padding: 14px 16px;
+            background: #023e8a;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sidebar-close {
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .sidebar-menu {
+            padding: 10px 0;
+        }
+        .sidebar-link {
+            display: block;
+            padding: 10px 18px;
+            text-decoration: none;
+            color: #023e8a;
+            font-size: 14px;
+        }
+        .sidebar-link:hover {
+            background: #e0f2ff;
+        }
+        .sidebar-open .sidebar-overlay {
+            display: block;
+        }
+        .sidebar-open .sidebar {
+            transform: translateX(0);
+        }
+
+        /* Page layout */
+        .page-wrapper {
+            padding: 40px 40px 60px;
+        }
+        h1 {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        p.subtitle {
+            text-align: center;
+            margin-top: 0;
+            color: #555;
+        }
+        .layout {
+            display: flex;
+            gap: 40px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        .left, .right {
+            flex: 1;
+            min-width: 280px;
+        }
+        .card {
+            background: #caf0f8;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        .text-input, .date-input, .select-input, .textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+            border-radius: 8px;
+            border: 1px solid #999;
+            box-sizing: border-box;
+        }
+        .textarea {
+            min-height: 80px;
+        }
+        .btn {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .btn-primary {
+            background: #0077b6;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #023e8a;
+        }
+        .message {
+            margin-top: 10px;
+            color: #0077b6;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        th, td {
+            border-bottom: 1px solid #ddd;
+            padding: 6px 4px;
+            text-align: left;
+        }
+        th {
+            background: #023e8a;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<header class="app-header">
+    <div class="app-title">Todo Web App</div>
+    <div class="hamburger" onclick="toggleSidebar()">≡</div>
+</header>
+
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <span>Menu</span>
+        <span class="sidebar-close" onclick="toggleSidebar()">✕</span>
+    </div>
+    <div class="sidebar-menu">
+        <a class="sidebar-link" href="{% url 'home' %}">Dashboard</a>
+        <a class="sidebar-link" href="{% url 'create_todo' %}">Create Todo Suggestions</a>
+        <a class="sidebar-link" href="{% url 'schedule_todo' %}">Todo Calendar / Schedule</a>
+    </div>
+</nav>
+
+<div class="page-wrapper">
+    <h1>Schedule Your Todos</h1>
+    <p class="subtitle">
+        Use your saved task suggestions to create scheduled todos.
+    </p>
+
+    <div class="layout">
+        <div class="left">
+            <div class="card">
+                <form method="post">
+                    {% csrf_token %}
+
+{% if editing_todo_id %}
+        <input type="hidden" name="todo_id" value="{{ editing_todo_id }}">
+        <div class="message" style="color:#c00; font-weight:bold; margin-top:6px;">
+            Editing existing todo...
+        </div>
+{% endif %}
+
+
+
+                    <label>Date</label>
+                    <input class="date-input" type="date" name="date" value="{{ previous_date }}">
+
+                    <label>Category</label>
+                    <select class="select-input" name="category" onchange="this.form.submit()">
+                        <option value="personal" {% if selected_category == 'personal' %}selected{% endif %}>Personal</option>
+                        <option value="school" {% if selected_category == 'school' %}selected{% endif %}>School</option>
+                        <option value="work" {% if selected_category == 'work' %}selected{% endif %}>Work</option>
+                    </select>
+
+                    <label>Choose a suggested task (optional)</label>
+                    <select class="select-input" name="template_id">
+                        <option value="">-- None / I will type my own --</option>
+                        {% for s in suggestions %}
+                            <option value="{{ s.id }}" {% if previous_template_id|default:'' == s.id|stringformat:"s" %}selected{% endif %}>
+                                {{ s.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <label>Or type a custom task title</label>
+                    <input class="text-input" type="text" name="custom_title"
+                           placeholder="e.g. Client meeting"
+                           value="{{ previous_custom_title }}">
+
+                    <label>Description (optional)</label>
+                    <textarea class="textarea" name="description" placeholder="Add details if needed...">{{ previous_description }}</textarea>
+
+                    <button class="btn btn-primary" type="submit" name="save_todo">Save Todo</button>
+
+                    {% if message %}
+                        <div class="message">{{ message }}</div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+
+        <div class="right">
+            <div class="card">
+                <h3>All Scheduled Todos (preview)</h3>
+                {% if todos %}
+                    <table>
+                        
+                        <thead>
+    <tr>
+        <th>Date</th>
+        <th>Category</th>
+        <th>Title</th>
+        <th>Actions</th>
+    </tr>
+</thead>
+
+
+                        
+                        <tbody>
+                            {% for t in todos %}
+                                
+<tr>
+    <td>{{ t.date }}</td>
+    <td>{{ t.get_category_display }}</td>
+    <td>{{ t.title }}</td>
+    <td>
+        <!-- Edit: reloads page with this todo loaded into the form -->
+        <a href="?edit_id={{ t.id }}">Edit</a>
+
+        <!-- Delete: submits a small POST form -->
+        <form method="post" style="display:inline;">
+            {% csrf_token %}
+            <input type="hidden" name="todo_id" value="{{ t.id }}">
+            <button type="submit" name="delete_todo" style="background:none;border:none;color:#c00;cursor:pointer;">
+                Delete
+            </button>
+        </form>
+    </td>
+</tr>
+
+
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>No todos scheduled yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleSidebar() {
+        document.body.classList.toggle("sidebar-open");
+    }
+
+    // Set minimum date to today so you can't pick past dates
+    (function () {
+        var dateInput = document.querySelector('input[name="date"]');
+        if (dateInput) {
+            var today = new Date().toISOString().split('T')[0];
+            dateInput.setAttribute('min', today);
+        }
+    })();
+</script>
+
+</body>
+</html>

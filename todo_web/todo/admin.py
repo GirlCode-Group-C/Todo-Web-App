@@ -1,3 +1,6 @@
 from django.contrib import admin
+from .models import TaskTemplate, Todo
 
-# Register your models here.
+
+admin.site.register(TaskTemplate)
+admin.site.register(Todo)
