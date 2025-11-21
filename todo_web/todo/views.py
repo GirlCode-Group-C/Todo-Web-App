@@ -1,10 +1,14 @@
-from datetime import date as date_cls 
+from datetime import date as date_cls
 from django.shortcuts import render, redirect
 from .models import TaskTemplate, Todo
 
+
+# -----------------------------
+# LANDING PAGE (teammate's page)
+# -----------------------------
 def landing_page(request):
     if request.method == 'POST':
-        
+
         selected = []
         if "personal" in request.POST:
             selected.append("personal")
@@ -12,52 +16,43 @@ def landing_page(request):
             selected.append("school")
         if "work" in request.POST:
             selected.append("work")
-        
+
         if not selected:
             error_message = "Please select at least one category!"
             return render(request, 'todo/landing.html', {'error_message': error_message})
-        
+
         request.session["selected_categories"] = selected
-        
+
         return redirect("create_todo")
-    
+
     return render(request, 'todo/landing.html')
 
 
-
+# -----------------------------
+# LEGACY HOME (not used anymore)
+# -----------------------------
 def home(request):
-    """
-    Temporary home view.
-    Right now, it just sends users to the create-todo page.
-    Later, your team can change this to the dashboard.
-    """
+    # Not needed now, but kept for compatibility
     return redirect("create_todo")
 
 
+# -----------------------------
+# CREATE TODO SUGGESTIONS PAGE
+# -----------------------------
 def create_todo(request):
     """
-    Create Todo (Task Template Version):
-    - Shows Personal / School / Work cards depending on selected categories.
-    - Each card has MULTIPLE text fields (list of tasks).
-    - SAVE on a card creates TaskTemplate entries.
-    - CONTINUE sends the user to the next page (for now: home).
+    Create Todo (Task Template Version)
     """
 
-    # 1) Which categories should show?
-    # If landing page sets session["selected_categories"], we use that.
-    # Otherwise, we default to all three.
     selected_categories = request.session.get(
         "selected_categories",
         ["personal", "school", "work"]
     )
 
     if request.method == "POST":
-        # CONTINUE button
         if "continue" in request.POST:
-            # TODO: change "schedule" to my dashboard route later
             return redirect("schedule_todo")
 
-        # Determine which category's SAVE button was clicked
         category = None
         task_field_name = None
 
@@ -72,7 +67,6 @@ def create_todo(request):
             task_field_name = "work_tasks"
 
         if category and task_field_name:
-            # Get all text values for that category's task inputs
             raw_tasks = request.POST.getlist(task_field_name)
 
             for task_text in raw_tasks:
@@ -80,16 +74,13 @@ def create_todo(request):
                 if not name:
                     continue
 
-                # Create or reuse a template for this category + name
                 TaskTemplate.objects.get_or_create(
                     name=name,
                     category=category,
                 )
 
-        # After saving, reload the page (PRG pattern)
         return redirect("create_todo")
 
-    # 2) On GET: load suggestions (previous templates) per category
     personal_templates = TaskTemplate.objects.filter(
         category="personal"
     ).order_by("name")
@@ -109,42 +100,36 @@ def create_todo(request):
     return render(request, "create_todo.html", context)
 
 
-#Schedule
-
+# -----------------------------
+# SCHEDULE TODO PAGE
+# -----------------------------
 def schedule_todo(request):
     """
-    Page 2: Simple scheduling page.
-    - User chooses a date and category.
-    - Can pick a suggested task (TaskTemplate) OR write a custom title.
-    - Creates or updates a Todo entry (date + category + title + optional description).
-    - You cannot schedule todos in the past.
-    - Also supports deleting existing Todos.
+    Page 2: Scheduling page.
     """
 
     message = ""
 
-    # Values to keep the form filled after submit
     previous_date = ""
     previous_category = "personal"
     previous_template_id = ""
     previous_custom_title = ""
     previous_description = ""
-    editing_todo_id = None  # if not None, we are editing this todo
+    editing_todo_id = None
 
-    # 💥 Handle DELETE requests first
+    # ---------- DELETE ----------
     if request.method == "POST" and "delete_todo" in request.POST:
         todo_id = request.POST.get("todo_id")
         if todo_id:
             try:
-                todo_obj = Todo.objects.get(id=todo_id)
-                todo_obj.delete()
+                Todo.objects.get(id=todo_id).delete()
                 message = "Todo deleted successfully."
             except Todo.DoesNotExist:
                 message = "Could not find the todo to delete."
-        # After delete, go on to load suggestions/todos below
-    # 💥 Handle SAVE (create or update)
+
+    # ---------- SAVE / EDIT ----------
     elif request.method == "POST" and "save_todo" in request.POST:
-        # Read form values WHEN saving a todo
+
         previous_date = request.POST.get("date") or ""
         previous_category = request.POST.get("category") or "personal"
         previous_template_id = request.POST.get("template_id") or ""
@@ -160,7 +145,7 @@ def schedule_todo(request):
 
         can_save = True
 
-        # 🔎 Validate the date (not empty, not in the past)
+        # Validate date
         if not date_value:
             can_save = False
             message = "Please choose a date."
@@ -168,7 +153,6 @@ def schedule_todo(request):
             try:
                 year, month, day = map(int, date_value.split("-"))
                 date_obj = date_cls(year, month, day)
-
                 if date_obj < date_cls.today():
                     can_save = False
                     message = "You cannot schedule todos in the past."
@@ -176,7 +160,7 @@ def schedule_todo(request):
                 can_save = False
                 message = "Please enter a valid date."
 
-        # Decide title: template or custom
+        # Decide title
         title = None
         template_obj = None
 
@@ -192,8 +176,8 @@ def schedule_todo(request):
         if can_save and not title and custom_title:
             title = custom_title
 
+        # Save or update
         if can_save and date_value and category and title:
-            # 🔁 UPDATE if editing, else CREATE
             if editing_todo_id:
                 try:
                     todo_obj = Todo.objects.get(id=editing_todo_id)
@@ -205,7 +189,6 @@ def schedule_todo(request):
                     todo_obj.save()
                     message = "Todo updated successfully!"
                 except Todo.DoesNotExist:
-                    # fallback: create new if not found
                     Todo.objects.create(
                         title=title,
                         description=description,
@@ -224,19 +207,18 @@ def schedule_todo(request):
                 )
                 message = "Todo saved successfully!"
 
-            # Clear form fields after success
             previous_date = ""
             previous_template_id = ""
             previous_custom_title = ""
             previous_description = ""
             editing_todo_id = None
         else:
-            if can_save and (not title):
-                message = "Please fill at least date, category and a title (template or custom)."
+            if can_save and not title:
+                message = "Please fill at least date, category and a title."
 
-    # 💥 Handle "Edit" link via GET (?edit_id=...)
+    # ---------- LOAD EDIT ----------
     edit_id = request.GET.get("edit_id")
-    if edit_id and not (request.method == "POST" and "save_todo" in request.POST):
+    if edit_id:
         try:
             todo_obj = Todo.objects.get(id=edit_id)
             previous_date = str(todo_obj.date)
@@ -246,9 +228,9 @@ def schedule_todo(request):
             previous_description = todo_obj.description or ""
             previous_template_id = todo_obj.template.id if todo_obj.template else ""
         except Todo.DoesNotExist:
-            message = message or "Could not find the todo to edit."
+            message = "Could not find the todo to edit."
 
-    # For GET and after POST (both save + category-change):
+    # Category selection for GET + POST
     selected_category = (
         request.POST.get("category")
         or request.GET.get("category")
