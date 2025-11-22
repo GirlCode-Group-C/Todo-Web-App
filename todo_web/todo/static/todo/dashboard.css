@@ -2,14 +2,17 @@
      font-family: Arial, sans-serif;
      display: flex;
      padding: 1rem;
+     background: #D4F1F4;
  }
 
  #calendar {
+    margin-top: 20px;
      width: 70%;
      margin-right: 2%;
  }
 
  .sidebar-container {
+    margin-top: 20px;
      width: 28%;
      height: 70%;
      background: #f8f9fa;

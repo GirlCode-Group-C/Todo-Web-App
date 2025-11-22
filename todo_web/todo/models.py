@@ -7,7 +7,7 @@ class TodoType(models.Model):
     def __str__(self):
         return self.name
 
-class Todo(models.Model):
+class Todos(models.Model):
     todo_type = models.ForeignKey(TodoType, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True)

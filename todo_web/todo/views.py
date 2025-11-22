@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
-from .models import Todo, TodoType
+from .models import Todos, TodoType
 from django.views.decorators.csrf import csrf_exempt
 import json
 from datetime import date, timedelta
@@ -12,9 +12,9 @@ def landing_page(request):
 def dashboard(request):
     today = date.today()
     tomorrow = today + timedelta(days=1)
-    todos_today = Todo.objects.filter(due_date=today)
-    todos_tomorrow = Todo.objects.filter(due_date=tomorrow)
-    todos_future = Todo.objects.filter(due_date__gt=tomorrow, due_date__month=today.month)
+    todos_today = Todos.objects.filter(due_date=today)
+    todos_tomorrow = Todos.objects.filter(due_date=tomorrow)
+    todos_future = Todos.objects.filter(due_date__gt=tomorrow, due_date__month=today.month)
     todo_types = TodoType.objects.all()
     return render(request, 'dashboard.html', {
         'todo_types': todo_types,
@@ -24,7 +24,7 @@ def dashboard(request):
     })
 
 def get_todos_json(request):
-    todos = Todo.objects.all()
+    todos = Todos.objects.all()
     data = [{
         'id': t.id,
         'title': t.title,
@@ -34,7 +34,7 @@ def get_todos_json(request):
     return JsonResponse(data, safe=False)
 
 def get_todo_json(request, todo_id):
-    todo = get_object_or_404(Todo, id=todo_id)
+    todo = get_object_or_404(Todos, id=todo_id)
     data = {
         'id': todo.id,
         'title': todo.title,
@@ -47,9 +47,9 @@ def get_todo_json(request, todo_id):
 def sidebar_partial(request):
     today = date.today()
     tomorrow = today + timedelta(days=1)
-    todos_today = Todo.objects.filter(due_date=today)
-    todos_tomorrow = Todo.objects.filter(due_date=tomorrow)
-    todos_future = Todo.objects.filter(due_date__gt=tomorrow, due_date__month=today.month)
+    todos_today = Todos.objects.filter(due_date=today)
+    todos_tomorrow = Todos.objects.filter(due_date=tomorrow)
+    todos_future = Todos.objects.filter(due_date__gt=tomorrow, due_date__month=today.month)
 
     html = render(request, 'partials/sidebar.html', {
         'todos_today': todos_today,
@@ -65,7 +65,7 @@ def add_todo_from_calendar(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         todo_type = TodoType.objects.get(id=data['todo_type'])
-        Todo.objects.create(
+        Todos.objects.create(
             todo_type=todo_type,
             title=data['title'],
             description=data.get('description', ''),
@@ -78,7 +78,7 @@ def add_todo_from_calendar(request):
 def update_todo(request, id):
     if request.method == 'POST':
         data = json.loads(request.body)
-        todo = Todo.objects.get(id=id)
+        todo = Todos.objects.get(id=id)
         todo.title = data['title']
         todo.description = data['description']
         todo.due_date = data['due_date']
@@ -89,7 +89,7 @@ def update_todo(request, id):
 @csrf_exempt
 def delete_todo(request, id):
     if request.method == 'POST':
-        todo = Todo.objects.get(id=id)
+        todo = Todos.objects.get(id=id)
         todo.delete()
         return JsonResponse({'status': 'deleted'})
 
