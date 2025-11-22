@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Todo Dashboard</title>
@@ -10,11 +10,30 @@
 </head>
 <body>
     
-    <div id="calendar"></div>
 
-    <aside id="sidebar-container" class="sidebar-container">
+    
+    <aside class="sidebar-overlay" onclick="toggleSidebar()"></aside>
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <span>Menu</span>
+            <span class="sidebar-close" onclick="toggleSidebar()">✕</span>
+        </div>
+        <div class="sidebar-menu">
+            <a class="sidebar-link" href="{% url 'schedule_todo' %}">Todo Calendar / Schedule</a>
+        </div>
+    </nav>
+
+    <header class="app-header">
+        <div class="app-title">Todo Web App</div>
+        <div class="hamburger" onclick="toggleSidebar()">≡</div>
+    </header>
+    <div class="body-container">
+      <div id="calendar"></div> 
+      <aside id="sidebar-container" class="sidebar-container">
         {% include 'partials/sidebar.html' %}
-    </aside>
+    </aside> 
+    </div>
+    
     <!-- Modal Popup -->
     <div id="todoModal">
         <div class="modal-card">
@@ -247,5 +266,20 @@
 
     });
     </script>
+
+    <script>
+    function toggleSidebar() {
+        document.body.classList.toggle("sidebar-open");
+    }
+
+    // Set minimum date to today so you can't pick past dates
+    (function () {
+        var dateInput = document.querySelector('input[name="date"]');
+        if (dateInput) {
+            var today = new Date().toISOString().split('T')[0];
+            dateInput.setAttribute('min', today);
+        }
+    })();
+</script>
 </body>
 </html>

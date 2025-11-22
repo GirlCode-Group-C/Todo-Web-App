@@ -1,21 +1,26 @@
  body {
      font-family: Arial, sans-serif;
-     display: flex;
-     padding: 1rem;
-     background: #D4F1F4;
+     padding: 0;
+     margin: 0;
+     background: #ffffff;
  }
 
  #calendar {
-    margin-top: 20px;
+     margin-top: 20px;
      width: 70%;
      margin-right: 2%;
  }
 
+ .body-container{
+    display: flex;
+    padding: 1rem;
+ }
+
  .sidebar-container {
-    margin-top: 20px;
+     margin-top: 20px;
      width: 28%;
      height: 70%;
-     background: #f8f9fa;
+     background: #caf0f8;
      padding: 1rem;
      border-radius: 8px;
  }
@@ -279,6 +284,88 @@
 
  #viewTodoModal .save-btn:hover {
      background: #218838;
+ }
+
+ /* Header & Sidebar */
+ .app-header {
+     background: #023e8a;
+     color: #ffffff;
+     padding: 12px 20px;
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+ }
+
+ .app-title {
+     font-size: 18px;
+     font-weight: bold;
+ }
+
+ .hamburger {
+     font-size: 22px;
+     cursor: pointer;
+     user-select: none;
+ }
+
+ .sidebar-overlay {
+     position: fixed;
+     inset: 0;
+     background: rgba(0, 0, 0, 0.4);
+     display: none;
+     z-index: 9;
+ }
+
+ .sidebar {
+     position: fixed;
+     top: 0;
+     left: 0;
+     width: 240px;
+     height: 100%;
+     background: #ffffff;
+     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+     transform: translateX(-260px);
+     transition: transform 0.2s ease-out;
+     z-index: 10;
+     display: flex;
+     flex-direction: column;
+ }
+
+ .sidebar-header {
+     padding: 14px 16px;
+     background: #023e8a;
+     color: #fff;
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+ }
+
+ .sidebar-close {
+     cursor: pointer;
+     font-weight: bold;
+ }
+
+ .sidebar-menu {
+     padding: 10px 0;
+ }
+
+ .sidebar-link {
+     display: block;
+     padding: 10px 18px;
+     text-decoration: none;
+     color: #023e8a;
+     font-size: 14px;
+ }
+
+ .sidebar-link:hover {
+     background: #e0f2ff;
+ }
+
+ .sidebar-open .sidebar-overlay {
+     display: block;
+ }
+
+ .sidebar-open .sidebar {
+     transform: translateX(0);
  }
 
  @keyframes fadeIn {
