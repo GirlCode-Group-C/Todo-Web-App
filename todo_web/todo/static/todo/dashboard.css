@@ -79,7 +79,7 @@
  }
 
  #todoModal .modal-card {
-     background: #ffffff;
+     background: #caf0f8;
      padding: 2rem;
      border-radius: 12px;
      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
@@ -177,7 +177,7 @@
  }
 
  #viewTodoModal .modal {
-     background: #ffffff;
+     background: #caf0f8;
      padding: 2rem;
      border-radius: 12px;
      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
@@ -221,6 +221,7 @@
      padding: 0.6rem 0.8rem;
      border-radius: 8px;
      border: 1px solid #ccc;
+     background: #fff;
      width: 90%;
      font-size: 1rem;
      outline: none;
