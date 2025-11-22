@@ -1,6 +1,6 @@
 from datetime import date as date_cls
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import TaskTemplate, Todo
+from .models import TaskTemplate, Todo, Todos, TodoType
 from django.views.decorators.csrf import csrf_exempt
 import json
 from datetime import date, timedelta
