@@ -266,55 +266,209 @@ def schedule_todo(request):
 #  TODO DASHBOARD PAGE
 # -----------------------------
 
+# def dashboard(request):
+#     today = date.today()
+#     tomorrow = today + timedelta(days=1)
+#     todos_today = Todos.objects.filter(due_date=today)
+#     todos_tomorrow = Todos.objects.filter(due_date=tomorrow)
+#     todos_future = Todos.objects.filter(due_date__gt=tomorrow, due_date__month=today.month)
+#     todo_types = TodoType.objects.all()
+#     return render(request, 'dashboard.html', {
+#         'todo_types': todo_types,
+#         'todos_today': todos_today,
+#         'todos_tomorrow': todos_tomorrow,
+#         'todos_future': todos_future
+#     })
+
 def dashboard(request):
     today = date.today()
     tomorrow = today + timedelta(days=1)
-    todos_today = Todos.objects.filter(due_date=today)
-    todos_tomorrow = Todos.objects.filter(due_date=tomorrow)
-    todos_future = Todos.objects.filter(due_date__gt=tomorrow, due_date__month=today.month)
-    todo_types = TodoType.objects.all()
+
+    # Existing Todos model
+    todos_today = list(Todos.objects.filter(due_date=today))
+    todos_tomorrow = list(Todos.objects.filter(due_date=tomorrow))
+    todos_future = list(Todos.objects.filter(due_date__gt=tomorrow, due_date__month=today.month))
+
+    # Include Todo model too
+    tasks_today = list(Todo.objects.filter(date=today))
+    tasks_tomorrow = list(Todo.objects.filter(date=tomorrow))
+    tasks_future = list(Todo.objects.filter(date__gt=tomorrow, date__month=today.month))
+
     return render(request, 'dashboard.html', {
-        'todo_types': todo_types,
-        'todos_today': todos_today,
-        'todos_tomorrow': todos_tomorrow,
-        'todos_future': todos_future
+        'todo_types': TodoType.objects.all(),
+        'todos_today': todos_today + tasks_today,
+        'todos_tomorrow': todos_tomorrow + tasks_tomorrow,
+        'todos_future': todos_future + tasks_future,
     })
 
+
+# def get_todos_json(request):
+#     todos = Todos.objects.all()
+#     data = [{
+#         'id': t.id,
+#         'title': t.title,
+#         "start": t.due_date.isoformat(),
+#         'color': t.todo_type.color
+#     } for t in todos]
+#     return JsonResponse(data, safe=False)
+
 def get_todos_json(request):
-    todos = Todos.objects.all()
-    data = [{
-        'id': t.id,
-        'title': t.title,
-        "start": t.due_date.isoformat(),
-        'color': t.todo_type.color
-    } for t in todos]
-    return JsonResponse(data, safe=False)
+    todos = []
+
+    # Existing Todos
+    for t in Todos.objects.all():
+        todos.append({
+            "id": f"todos-{t.id}",
+            "model": "todos",
+            "title": t.title,
+            "start": t.due_date.isoformat(),
+            "color": t.todo_type.color,
+        })
+
+    # Add Todo model
+    CATEGORY_COLORS = {
+        "personal": "#2196f3",
+        "school": "#4caf50",
+        "work": "#ff9800",
+    }
+
+    for t in Todo.objects.all():
+        color = CATEGORY_COLORS.get(t.category, "#000000")
+        todos.append({
+            "id": f"todo-{t.id}",
+            "model": "todo",
+            "title": t.title,
+            "start": t.date.isoformat(),
+            "color": color,
+        })
+
+    return JsonResponse(todos, safe=False)
+
+
+# def get_todo_json(request, todo_id):
+#     todo = get_object_or_404(Todos, id=todo_id)
+#     data = {
+#         'id': todo.id,
+#         'title': todo.title,
+#         'description': todo.description,
+#         'due_date': todo.due_date.isoformat(),
+#         'todo_type': todo.todo_type.id,
+#     }
+#     return JsonResponse(data)
+
+# def get_todo_json(request, todo_id):
+#     model, id = todo_id.split("-")
+
+#     if model == "todos":
+#         obj = get_object_or_404(Todos, id=id)
+#         return JsonResponse({
+#             "model": "todos",
+#             "id": obj.id,
+#             "title": obj.title,
+#             "description": obj.description,
+#             "due_date": obj.due_date.isoformat(),
+#             "todo_type": obj.todo_type.id,
+#         })
+
+#     else:  # Todo
+#         obj = get_object_or_404(Todo, id=id)
+#         return JsonResponse({
+#             "model": "todo",
+#             "id": obj.id,
+#             "title": obj.title,
+#             "description": obj.description,
+#             "due_date": obj.date.isoformat(),
+#             "category": obj.category,
+#         })
 
 def get_todo_json(request, todo_id):
-    todo = get_object_or_404(Todos, id=todo_id)
-    data = {
-        'id': todo.id,
-        'title': todo.title,
-        'description': todo.description,
-        'due_date': todo.due_date.isoformat(),
-        'todo_type': todo.todo_type.id,
-    }
+    """
+    Supports prefixed IDs from calendar/sidebar: todos-4 or todo-7
+    """
+    if todo_id.startswith("todos-"):
+        real_id = int(todo_id.split("-")[1])
+        todo_obj = get_object_or_404(Todos, id=real_id)
+        data = {
+            'id': f"todos-{todo_obj.id}",
+            'title': todo_obj.title,
+            'description': todo_obj.description,
+            'due_date': todo_obj.due_date.isoformat(),
+            'todo_type': todo_obj.todo_type.id,
+            'model': 'Todos'
+        }
+    elif todo_id.startswith("todo-"):
+        real_id = int(todo_id.split("-")[1])
+        todo_obj = get_object_or_404(Todo, id=real_id)
+        CATEGORY_COLORS = {
+            "personal": "#4caf50",
+            "school": "#2196f3",
+            "work": "#ff9800",
+        }
+        data = {
+            'id': todo_obj.id,
+            'title': todo_obj.title,
+            'description': todo_obj.description,
+            'due_date': todo_obj.date.isoformat(),
+            'todo_type': todo_obj.category,
+            'color': CATEGORY_COLORS.get(todo_obj.category, '#000000'),
+            'model': 'Todo'
+        }
+    else:
+        return JsonResponse({'error': 'Invalid ID'}, status=400)
+
     return JsonResponse(data)
+
+
+
+
+# def sidebar_partial(request):
+#     today = date.today()
+#     tomorrow = today + timedelta(days=1)
+#     todos_today = Todos.objects.filter(due_date=today)
+#     todos_tomorrow = Todos.objects.filter(due_date=tomorrow)
+#     todos_future = Todos.objects.filter(due_date__gt=tomorrow, due_date__month=today.month)
+
+#     html = render(request, 'partials/sidebar.html', {
+#         'todos_today': todos_today,
+#         'todos_tomorrow': todos_tomorrow,
+#         'todos_future': todos_future
+#     }).content.decode('utf-8')
+
+#     return JsonResponse({'html': html})
 
 def sidebar_partial(request):
     today = date.today()
     tomorrow = today + timedelta(days=1)
-    todos_today = Todos.objects.filter(due_date=today)
-    todos_tomorrow = Todos.objects.filter(due_date=tomorrow)
-    todos_future = Todos.objects.filter(due_date__gt=tomorrow, due_date__month=today.month)
+
+    # Existing Todos model
+    todos_today = list(Todos.objects.filter(due_date=today))
+    todos_tomorrow = list(Todos.objects.filter(due_date=tomorrow))
+    todos_future = list(Todos.objects.filter(
+        due_date__gt=tomorrow,
+        due_date__month=today.month
+    ))
+
+    # Include Todo model
+    tasks_today = list(Todo.objects.filter(date=today))
+    tasks_tomorrow = list(Todo.objects.filter(date=tomorrow))
+    tasks_future = list(Todo.objects.filter(
+        date__gt=tomorrow,
+        date__month=today.month
+    ))
+
+    # Merge both model sets
+    combined_today = todos_today + tasks_today
+    combined_tomorrow = todos_tomorrow + tasks_tomorrow
+    combined_future = todos_future + tasks_future
 
     html = render(request, 'partials/sidebar.html', {
-        'todos_today': todos_today,
-        'todos_tomorrow': todos_tomorrow,
-        'todos_future': todos_future
+        'todos_today': combined_today,
+        'todos_tomorrow': combined_tomorrow,
+        'todos_future': combined_future
     }).content.decode('utf-8')
 
     return JsonResponse({'html': html})
+
 
 
 @csrf_exempt
@@ -342,6 +496,32 @@ def update_todo(request, id):
         todo.todo_type_id = data['todo_type']
         todo.save()
         return JsonResponse({'status': 'updated'})
+    
+# @csrf_exempt
+# def update_todo_todo(request, id):
+#     if request.method == 'POST':
+#         data = json.loads(request.body)
+#         todo = get_object_or_404(Todo, id=id)
+#         todo.title = data.get("title", todo.title)
+#         todo.description = data.get("description", todo.description)
+#         todo.date = data.get("date", todo.date)
+#         todo.category = data.get("category", todo.category)
+#         todo.save()
+#         return JsonResponse({'status': 'updated'})
+    
+@csrf_exempt
+def update_todo_todo(request, id):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        todo = get_object_or_404(Todo, id=id)
+        todo.title = data['title']
+        todo.description = data.get('description', '')
+        todo.date = data['date']
+        todo.category = data['category']
+        todo.save()
+        return JsonResponse({'status': 'updated'})
+
+
 
 @csrf_exempt
 def delete_todo(request, id):
@@ -349,3 +529,13 @@ def delete_todo(request, id):
         todo = Todos.objects.get(id=id)
         todo.delete()
         return JsonResponse({'status': 'deleted'})
+
+@csrf_exempt
+def delete_todo_todo(request, id):
+    if request.method == 'POST':
+        todo = get_object_or_404(Todo, id=id)
+        todo.delete()
+        return JsonResponse({'status': 'deleted'})
+
+
+

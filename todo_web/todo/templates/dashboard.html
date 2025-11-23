@@ -70,17 +70,26 @@
                 <div class="form-group">
                     <label>Type:</label>
                     <select id="viewTodoType" disabled>
-                        {% for t in todo_types %}
-                            <option value="{{ t.id }}">{{ t.name }}</option>
-                        {% endfor %}
+                        <optgroup label="Todo Types">
+                            {% for t in todo_types %}
+                                <option value="{{ t.id }}">{{ t.name }}</option>
+                            {% endfor %}
+                        </optgroup>
+                        <optgroup label="Categories">
+                            <option value="personal">Personal</option>
+                            <option value="school">School</option>
+                            <option value="work">Work</option>
+                        </optgroup>
+
                     </select>
+
                 </div>
             </div>
 
             <div class="modal-actions">
                 <button id="editTodoBtn" class="edit-btn">Edit</button>
                 <button id="deleteTodoBtn" class="delete-btn">Delete</button>
-                <button id="saveTodoBtn" class="save-btn" style="display:none;">Save</button>
+                <button id="updateTodoBtn" class="save-btn" style="display:none;">Update</button>
             </div>
         </div>
     </div>
@@ -104,7 +113,7 @@
                 fetch(`/get-todo-json/${todoId}/`)
                     .then(res => res.json())
                     .then(todo => {
-                        openViewTodoModal(todo);
+                        openViewTodoModal(todo, todo.model);
                     })
                     .catch(err => console.error('Failed to load todo details:', err));
             }
@@ -167,41 +176,64 @@
         // View/Edit/Delete Modal
         // ----------------------
         let currentTodoId = null;
+        let currentTodoModel = null;
 
-        function openViewTodoModal(todo) {
+        function openViewTodoModal(todo, model) {
             currentTodoId = todo.id;
+            currentTodoModel = model; // "Todos" or "Todo"
 
             document.getElementById('viewTodoTitle').value = todo.title;
             document.getElementById('viewTodoDesc').value = todo.description;
-            document.getElementById('viewTodoDueDate').value = todo.due_date;
-            document.getElementById('viewTodoType').value = todo.todo_type;
+            document.getElementById('viewTodoDueDate').value = todo.due_date || todo.date;
+
+            const select = document.getElementById('viewTodoType');
+            select.value = todo.todo_type || todo.category;
 
             setViewFieldsReadonly(true);
-            document.getElementById('saveTodoBtn').style.display = 'none';
+            document.getElementById('updateTodoBtn').style.display = 'none';
             document.getElementById('editTodoBtn').style.display = 'inline-block';
 
-            document.getElementById('viewTodoModal').style.display = 'flex';
+            viewModal.style.display = 'flex';
         }
+
 
         document.getElementById('closeViewModal').onclick = () => viewModal.style.display = 'none';
 
         document.getElementById('editTodoBtn').onclick = () => {
             setViewFieldsReadonly(false);
-            document.getElementById('saveTodoBtn').style.display = 'inline-block';
+            document.getElementById('updateTodoBtn').style.display = 'inline-block';
             document.getElementById('editTodoBtn').style.display = 'none';
         };
 
-        document.getElementById('saveTodoBtn').onclick = () => {
-            const payload = {
+        document.getElementById('updateTodoBtn').onclick = () => {
+
+            let payload = {
                 title: document.getElementById('viewTodoTitle').value,
-                description: document.getElementById('viewTodoDesc').value,
-                due_date: document.getElementById('viewTodoDueDate').value,
-                todo_type: document.getElementById('viewTodoType').value
+                description: document.getElementById('viewTodoDesc').value
             };
-            fetch(`/update-todo/${currentTodoId}/`, {
+
+            let todoId = currentTodoId;
+            if (currentTodoModel === 'Todos' && typeof currentTodoId === 'string' && currentTodoId.includes('-')) {
+                todoId = currentTodoId.split('-')[1];
+            }
+
+            let url = '';
+
+            if (currentTodoModel === 'Todos') {
+                payload.due_date = document.getElementById('viewTodoDueDate').value;
+                payload.todo_type = document.getElementById('viewTodoType').value;
+                url = `/update-todo/${todoId}/`;
+            } else if (currentTodoModel === 'Todo') {
+                payload.date = document.getElementById('viewTodoDueDate').value;
+                payload.category = document.getElementById('viewTodoType').value;
+                url = `/update-todo-todo/${todoId}/`;
+            }
+
+
+            fetch(url, {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json', 
+                headers: {
+                    'Content-Type': 'application/json',
                     'X-CSRFToken': '{{ csrf_token }}'
                 },
                 body: JSON.stringify(payload)
@@ -212,17 +244,31 @@
             });
         };
 
+
+
+        
         document.getElementById('deleteTodoBtn').onclick = () => {
-            if (!confirm('Are you sure you want to delete this todo?')) return;
-            fetch(`/delete-todo/${currentTodoId}/`, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-            }).then(() => {
-                viewModal.style.display = 'none';
-                calendar.refetchEvents();
-                refreshSidebar();
-            });
-        };
+        if (!confirm('Are you sure you want to delete this todo?')) return;
+
+        let [modelPrefix, id] = currentTodoId.split('-');
+        let url = '';
+
+        if (modelPrefix === 'todos') {
+            url = `/delete-todo/${id}/`;
+        } else if (modelPrefix === 'todo') {
+            url = `/delete-todo-todo/${id}/`;
+        }
+
+        fetch(url, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+        }).then(() => {
+            viewModal.style.display = 'none';
+            calendar.refetchEvents();
+            refreshSidebar();
+        });
+    };
+
 
         function setViewFieldsReadonly(readonly) {
             document.getElementById('viewTodoTitle').readOnly = readonly;
@@ -241,7 +287,6 @@
         function rebindTodoCardClickHandlers() {
             document.querySelectorAll('.todo-card').forEach(card => {
                 card.onclick = () => {
-                if(!card.dataset.id) return
                     const todo = {
                         id: card.dataset.id,
                         title: card.dataset.title,
@@ -249,10 +294,12 @@
                         due_date: card.dataset.date,
                         todo_type: card.dataset.type
                     };
-                    openViewTodoModal(todo);
+                    const model = card.dataset.model; // "Todos" or "Todo"
+                    openViewTodoModal(todo, model);
                 };
             });
         }
+
 
         // Initial binding
         rebindTodoCardClickHandlers();

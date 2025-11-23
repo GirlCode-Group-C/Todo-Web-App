@@ -1,55 +1,29 @@
-<h2>Todo Overview</h2>
+{% load todo_cards %}
 
 <h3>Today</h3>
+
 <div class="todo-list">
     {% for t in todos_today %}
-    <div class="todo-card"
-         style="border-left: 6px solid {{ t.todo_type.color }}"
-         data-id="{{ t.id }}"
-         data-title="{{ t.title }}"
-         data-desc="{{ t.description }}"
-         data-date="{{ t.due_date|date:'Y-m-d' }}"
-         data-type="{{ t.todo_type.id }}">
-        <strong>{{ t.title }}</strong>
-        <p>{{ t.todo_type.name }}</p>
-    </div>
+        {% render_card t %}
     {% empty %}
-    <p>No Todos for today</p>
+        <p>No Todos for today</p>
     {% endfor %}
 </div>
 
 <h4>Tomorrow</h4>
 <div class="todo-list">
     {% for t in todos_tomorrow %}
-    <div class="todo-card"
-         style="border-left: 6px solid {{ t.todo_type.color }}"
-         data-id="{{ t.id }}"
-         data-title="{{ t.title }}"
-         data-desc="{{ t.description }}"
-         data-date="{{ t.due_date|date:'Y-m-d' }}"
-         data-type="{{ t.todo_type.id }}">
-        <strong>{{ t.title }}</strong>
-        <p>{{ t.todo_type.name }}</p>
-    </div>
+        {% render_card t %}
     {% empty %}
-    <p>No Todos for tomorrow</p>
+        <p>No Todos for tomorrow</p>
     {% endfor %}
 </div>
 
 <h4>Future (This Month)</h4>
 <div class="todo-list">
     {% for t in todos_future %}
-    <div class="todo-card"
-         style="border-left: 6px solid {{ t.todo_type.color }}"
-         data-id="{{ t.id }}"
-         data-title="{{ t.title }}"
-         data-desc="{{ t.description }}"
-         data-date="{{ t.due_date|date:'Y-m-d' }}"
-         data-type="{{ t.todo_type.id }}">
-        <strong>{{ t.title }}</strong>
-        <p>{{ t.todo_type.name }}</p>
-    </div>
+        {% render_card t %}
     {% empty %}
-    <p>No future Todos</p>
+        <p>No future Todos</p>
     {% endfor %}
 </div>
