@@ -391,3 +391,122 @@
      display: flex;
      flex-direction: column;
  }
+
+/* ============================
+   Daily reminder toast popup
+   ============================ */
+
+.reminder-toast {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    width: 320px;
+    max-width: 90vw;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    padding: 14px 16px 12px;
+    font-size: 14px;
+    z-index: 1200;
+
+    /* start hidden, then fade/slide in when JS adds .show */
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.reminder-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.reminder-toast-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.reminder-toast-close {
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 4px;
+}
+
+.reminder-toast-body {
+    margin-bottom: 8px;
+}
+
+.reminder-toast-body p {
+    margin: 0 0 4px;
+}
+
+.reminder-toast-body ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.reminder-toast-body li {
+    margin-bottom: 2px;
+}
+
+.reminder-title {
+    font-weight: 600;
+}
+
+.reminder-category {
+    color: #666;
+    font-size: 12px;
+    margin-left: 4px;
+}
+
+.reminder-toast-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 4px;
+}
+
+.reminder-btn-primary,
+.reminder-btn-secondary {
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 12px;
+    border: none;
+    cursor: pointer;
+}
+
+.reminder-btn-primary {
+    background: #0077b6;
+    color: #fff;
+}
+
+.reminder-btn-primary:hover {
+    background: #023e8a;
+}
+
+.reminder-btn-secondary {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.reminder-btn-secondary:hover {
+    background: #cfcfcf;
+}
+
+.reminder-btn-link {
+    font-size: 12px;
+    text-decoration: none;
+    color: #0077b6;
+}
+
+.reminder-btn-link:hover {
+    text-decoration: underline;
+}
+

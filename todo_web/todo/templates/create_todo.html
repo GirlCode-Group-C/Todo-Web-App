@@ -11,7 +11,7 @@
             background: #ffffff;
         }
 
-        /* Header & Sidebar */
+        /* Header & sidebar layout */
         .app-header {
             background: #023e8a;
             color: #ffffff;
@@ -96,6 +96,8 @@
             margin-top: 0;
             color: #555;
         }
+
+        /* Card grid for categories */
         .grid {
             display: flex;
             justify-content: center;
@@ -120,6 +122,8 @@
             margin: -20px -20px 16px -20px;
             font-size: 18px;
         }
+
+        /* Inputs & hints */
         .task-input {
             width: 100%;
             padding: 8px;
@@ -143,6 +147,8 @@
             color: #333;
             margin: 2px 0;
         }
+
+        /* Buttons */
         .btn {
             display: inline-block;
             margin-top: 12px;
@@ -188,7 +194,6 @@
         <span class="sidebar-close" onclick="toggleSidebar()">✕</span>
     </div>
     <div class="sidebar-menu">
-        <!-- Adjust URLs/names once your real dashboard route exists -->
         <a class="sidebar-link" href="{% url 'home' %}">Dashboard</a>
         <a class="sidebar-link" href="{% url 'create_todo' %}">Create Todo Suggestions</a>
         <a class="sidebar-link" href="{% url 'schedule_todo' %}">Todo Calendar / Schedule</a>
@@ -228,7 +233,9 @@
                 <div class="suggestions-list">None yet.</div>
             {% endif %}
 
-            <button class="btn btn-save" type="submit" name="save_personal">Save Personal Tasks</button>
+            <button class="btn btn-save" type="submit" name="save_personal">
+                Save Personal Tasks
+            </button>
         </form>
         {% endif %}
 
@@ -257,7 +264,9 @@
                 <div class="suggestions-list">None yet.</div>
             {% endif %}
 
-            <button class="btn btn-save" type="submit" name="save_school">Save School Tasks</button>
+            <button class="btn btn-save" type="submit" name="save_school">
+                Save School Tasks
+            </button>
         </form>
         {% endif %}
 
@@ -286,7 +295,9 @@
                 <div class="suggestions-list">None yet.</div>
             {% endif %}
 
-            <button class="btn btn-save" type="submit" name="save_work">Save Work Tasks</button>
+            <button class="btn btn-save" type="submit" name="save_work">
+                Save Work Tasks
+            </button>
         </form>
         {% endif %}
 
@@ -295,12 +306,15 @@
     <div class="continue-wrapper">
         <form method="post">
             {% csrf_token %}
-            <button class="btn btn-continue" type="submit" name="continue">Continue</button>
+            <button class="btn btn-continue" type="submit" name="continue">
+                Continue
+            </button>
         </form>
     </div>
 </div>
 
 <script>
+    // Simple toggle for mobile/overlay sidebar
     function toggleSidebar() {
         document.body.classList.toggle("sidebar-open");
     }

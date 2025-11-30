@@ -1,19 +1,24 @@
-from datetime import date as date_cls
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import TaskTemplate, Todo, Todos, TodoType
-from django.views.decorators.csrf import csrf_exempt
+from datetime import date as date_cls, date, timedelta
 import json
-from datetime import date, timedelta
+
 from django.http import JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+
+from .models import TaskTemplate, Todo, Todos, TodoType
 
 
 # -----------------------------
-# LANDING PAGE (teammate's page)
+# LANDING PAGE - Thando's Page
 # -----------------------------
 def landing_page(request):
+    """
+    First page where user selects which categories (personal/school/work)
+    they want to work with. Selection is saved in session.
+    """
     if request.method == 'POST':
-
         selected = []
+
         if "personal" in request.POST:
             selected.append("personal")
         if "school" in request.POST:
@@ -21,45 +26,52 @@ def landing_page(request):
         if "work" in request.POST:
             selected.append("work")
 
+        # Require at least one category
         if not selected:
             error_message = "Please select at least one category!"
             return render(request, 'todo/landing.html', {'error_message': error_message})
 
+        # Store selected categories in the session
         request.session["selected_categories"] = selected
-
         return redirect("create_todo")
 
     return render(request, 'todo/landing.html')
 
 
 # -----------------------------
-# LEGACY HOME (not used anymore)
+# LEGACY HOME (kept for routing)
 # -----------------------------
 def home(request):
-    # Not needed now, but kept for compatibility
+    """
+    Legacy view kept for compatibility – simply redirects to create_todo.
+    """
     return redirect("create_todo")
 
 
 # -----------------------------
-# CREATE TODO SUGGESTIONS PAGE
+# CREATE TODO SUGGESTIONS - Celestial's Page
 # -----------------------------
 def create_todo(request):
     """
-    Create Todo (Task Template Version)
+    Page where the user creates reusable task templates (TaskTemplate)
+    for each category (personal / school / work).
     """
 
+    # If user skipped landing_page, default to all categories
     selected_categories = request.session.get(
         "selected_categories",
         ["personal", "school", "work"]
     )
 
     if request.method == "POST":
+        # When "Continue" is pressed, go to the scheduling page
         if "continue" in request.POST:
             return redirect("schedule_todo")
 
         category = None
         task_field_name = None
 
+        # Decide which form was submitted (personal / school / work)
         if "save_personal" in request.POST:
             category = "personal"
             task_field_name = "personal_tasks"
@@ -70,6 +82,7 @@ def create_todo(request):
             category = "work"
             task_field_name = "work_tasks"
 
+        # Save non-empty task names as TaskTemplate rows
         if category and task_field_name:
             raw_tasks = request.POST.getlist(task_field_name)
 
@@ -85,6 +98,7 @@ def create_todo(request):
 
         return redirect("create_todo")
 
+    # Load existing templates to show under each card
     personal_templates = TaskTemplate.objects.filter(
         category="personal"
     ).order_by("name")
@@ -105,11 +119,12 @@ def create_todo(request):
 
 
 # -----------------------------
-# SCHEDULE TODO PAGE
+# SCHEDULE TODO PAGE - Celestial's Page
 # -----------------------------
 def schedule_todo(request):
     """
-    Page 2: Scheduling page.
+    Page where the user schedules actual Todos (new model) on specific dates
+    using the templates or custom titles.
     """
 
     message = ""
@@ -133,7 +148,7 @@ def schedule_todo(request):
 
     # ---------- SAVE / EDIT ----------
     elif request.method == "POST" and "save_todo" in request.POST:
-
+        # Preserve previous values in case validation fails
         previous_date = request.POST.get("date") or ""
         previous_category = request.POST.get("category") or "personal"
         previous_template_id = request.POST.get("template_id") or ""
@@ -149,7 +164,7 @@ def schedule_todo(request):
 
         can_save = True
 
-        # Validate date
+        # Validate date (not empty, not in the past, valid format)
         if not date_value:
             can_save = False
             message = "Please choose a date."
@@ -164,7 +179,7 @@ def schedule_todo(request):
                 can_save = False
                 message = "Please enter a valid date."
 
-        # Decide title
+        # Decide title: from template or from custom field
         title = None
         template_obj = None
 
@@ -172,6 +187,7 @@ def schedule_todo(request):
             try:
                 template_obj = TaskTemplate.objects.get(id=template_id)
                 title = template_obj.name
+                # Use template description if user left description blank
                 if not description:
                     description = template_obj.description
             except TaskTemplate.DoesNotExist:
@@ -180,7 +196,7 @@ def schedule_todo(request):
         if can_save and not title and custom_title:
             title = custom_title
 
-        # Save or update
+        # Save or update row in Todo
         if can_save and date_value and category and title:
             if editing_todo_id:
                 try:
@@ -211,6 +227,7 @@ def schedule_todo(request):
                 )
                 message = "Todo saved successfully!"
 
+            # Clear form after successful save
             previous_date = ""
             previous_template_id = ""
             previous_custom_title = ""
@@ -234,7 +251,7 @@ def schedule_todo(request):
         except Todo.DoesNotExist:
             message = "Could not find the todo to edit."
 
-    # Category selection for GET + POST
+    # Determine which category's templates to show
     selected_category = (
         request.POST.get("category")
         or request.GET.get("category")
@@ -242,10 +259,12 @@ def schedule_todo(request):
         or "personal"
     )
 
+    # Suggestions for the currently selected category
     suggestions = TaskTemplate.objects.filter(
         category=selected_category
     ).order_by("name")
 
+    # All scheduled todos shown in the table preview
     todos = Todo.objects.all().order_by("date", "category", "title")
 
     context = {
@@ -262,130 +281,69 @@ def schedule_todo(request):
     }
     return render(request, "schedule_todo.html", context)
 
+
 # -----------------------------
 #  TODO DASHBOARD PAGE
 # -----------------------------
-
-# def dashboard(request):
-#     today = date.today()
-#     tomorrow = today + timedelta(days=1)
-#     todos_today = Todos.objects.filter(due_date=today)
-#     todos_tomorrow = Todos.objects.filter(due_date=tomorrow)
-#     todos_future = Todos.objects.filter(due_date__gt=tomorrow, due_date__month=today.month)
-#     todo_types = TodoType.objects.all()
-#     return render(request, 'dashboard.html', {
-#         'todo_types': todo_types,
-#         'todos_today': todos_today,
-#         'todos_tomorrow': todos_tomorrow,
-#         'todos_future': todos_future
-#     })
-
 def dashboard(request):
+    """
+    Dashboard view used by FullCalendar and the right-hand sidebar.
+    Uses only the new Todo model.
+    """
     today = date.today()
     tomorrow = today + timedelta(days=1)
 
-    # Existing Todos model
-    todos_today = list(Todos.objects.filter(due_date=today))
-    todos_tomorrow = list(Todos.objects.filter(due_date=tomorrow))
-    todos_future = list(Todos.objects.filter(due_date__gt=tomorrow, due_date__month=today.month))
+    # Today's, tomorrow's and this month's future todos
+    todos_today = Todo.objects.filter(date=today).order_by("title")
+    todos_tomorrow = Todo.objects.filter(date=tomorrow).order_by("title")
+    todos_future = Todo.objects.filter(
+        date__gt=tomorrow,
+        date__month=today.month
+    ).order_by("date", "title")
 
-    # Include Todo model too
-    tasks_today = list(Todo.objects.filter(date=today))
-    tasks_tomorrow = list(Todo.objects.filter(date=tomorrow))
-    tasks_future = list(Todo.objects.filter(date__gt=tomorrow, date__month=today.month))
+    # All templates used in the "Create New Todo" modal suggestions
+    task_templates = TaskTemplate.objects.all().order_by("category", "name")
 
     return render(request, 'dashboard.html', {
+        # todo_types is kept for compatibility with legacy parts of the UI
         'todo_types': TodoType.objects.all(),
-        'todos_today': todos_today + tasks_today,
-        'todos_tomorrow': todos_tomorrow + tasks_tomorrow,
-        'todos_future': todos_future + tasks_future,
+        'task_templates': task_templates,
+        'todos_today': todos_today,
+        'todos_tomorrow': todos_tomorrow,
+        'todos_future': todos_future,
     })
 
 
-# def get_todos_json(request):
-#     todos = Todos.objects.all()
-#     data = [{
-#         'id': t.id,
-#         'title': t.title,
-#         "start": t.due_date.isoformat(),
-#         'color': t.todo_type.color
-#     } for t in todos]
-#     return JsonResponse(data, safe=False)
-
 def get_todos_json(request):
-    todos = []
-
-    # Existing Todos
-    for t in Todos.objects.all():
-        todos.append({
-            "id": f"todos-{t.id}",
-            "model": "todos",
-            "title": t.title,
-            "start": t.due_date.isoformat(),
-            "color": t.todo_type.color,
-        })
-
-    # Add Todo model
+    """
+    Return events for FullCalendar, using only the new Todo model.
+    """
     CATEGORY_COLORS = {
-        "personal": "#2196f3",
-        "school": "#4caf50",
-        "work": "#ff9800",
+        "personal": "#2196f3",  # blue
+        "school":   "#4caf50",  # green
+        "work":     "#ff9800",  # orange
     }
 
+    events = []
     for t in Todo.objects.all():
-        color = CATEGORY_COLORS.get(t.category, "#000000")
-        todos.append({
-            "id": f"todo-{t.id}",
+        events.append({
+            "id": f"todo-{t.id}",         # prefixed ID used by calendar + modals
             "model": "todo",
             "title": t.title,
             "start": t.date.isoformat(),
-            "color": color,
+            "color": CATEGORY_COLORS.get(t.category, "#000000"),
         })
 
-    return JsonResponse(todos, safe=False)
+    return JsonResponse(events, safe=False)
 
-
-# def get_todo_json(request, todo_id):
-#     todo = get_object_or_404(Todos, id=todo_id)
-#     data = {
-#         'id': todo.id,
-#         'title': todo.title,
-#         'description': todo.description,
-#         'due_date': todo.due_date.isoformat(),
-#         'todo_type': todo.todo_type.id,
-#     }
-#     return JsonResponse(data)
-
-# def get_todo_json(request, todo_id):
-#     model, id = todo_id.split("-")
-
-#     if model == "todos":
-#         obj = get_object_or_404(Todos, id=id)
-#         return JsonResponse({
-#             "model": "todos",
-#             "id": obj.id,
-#             "title": obj.title,
-#             "description": obj.description,
-#             "due_date": obj.due_date.isoformat(),
-#             "todo_type": obj.todo_type.id,
-#         })
-
-#     else:  # Todo
-#         obj = get_object_or_404(Todo, id=id)
-#         return JsonResponse({
-#             "model": "todo",
-#             "id": obj.id,
-#             "title": obj.title,
-#             "description": obj.description,
-#             "due_date": obj.date.isoformat(),
-#             "category": obj.category,
-#         })
 
 def get_todo_json(request, todo_id):
     """
-    Supports prefixed IDs from calendar/sidebar: todos-4 or todo-7
+    Returns JSON details for a single Todo (new model) or Todos (legacy model),
+    depending on the prefixed ID: 'todos-4' or 'todo-7'.
     """
     if todo_id.startswith("todos-"):
+        # Legacy model – kept for backward compatibility
         real_id = int(todo_id.split("-")[1])
         todo_obj = get_object_or_404(Todos, id=real_id)
         data = {
@@ -394,7 +352,7 @@ def get_todo_json(request, todo_id):
             'description': todo_obj.description,
             'due_date': todo_obj.due_date.isoformat(),
             'todo_type': todo_obj.todo_type.id,
-            'model': 'Todos'
+            'model': 'Todos',
         }
     elif todo_id.startswith("todo-"):
         real_id = int(todo_id.split("-")[1])
@@ -411,7 +369,7 @@ def get_todo_json(request, todo_id):
             'due_date': todo_obj.date.isoformat(),
             'todo_type': todo_obj.category,
             'color': CATEGORY_COLORS.get(todo_obj.category, '#000000'),
-            'model': 'Todo'
+            'model': 'Todo',
         }
     else:
         return JsonResponse({'error': 'Invalid ID'}, status=400)
@@ -419,74 +377,93 @@ def get_todo_json(request, todo_id):
     return JsonResponse(data)
 
 
-
-
-# def sidebar_partial(request):
-#     today = date.today()
-#     tomorrow = today + timedelta(days=1)
-#     todos_today = Todos.objects.filter(due_date=today)
-#     todos_tomorrow = Todos.objects.filter(due_date=tomorrow)
-#     todos_future = Todos.objects.filter(due_date__gt=tomorrow, due_date__month=today.month)
-
-#     html = render(request, 'partials/sidebar.html', {
-#         'todos_today': todos_today,
-#         'todos_tomorrow': todos_tomorrow,
-#         'todos_future': todos_future
-#     }).content.decode('utf-8')
-
-#     return JsonResponse({'html': html})
-
 def sidebar_partial(request):
+    """
+    Returns the HTML for the right-hand sidebar (Today / Tomorrow / Future),
+    used by fetch() to refresh the sidebar after changes.
+    """
     today = date.today()
     tomorrow = today + timedelta(days=1)
 
-    # Existing Todos model
-    todos_today = list(Todos.objects.filter(due_date=today))
-    todos_tomorrow = list(Todos.objects.filter(due_date=tomorrow))
-    todos_future = list(Todos.objects.filter(
-        due_date__gt=tomorrow,
-        due_date__month=today.month
-    ))
-
-    # Include Todo model
-    tasks_today = list(Todo.objects.filter(date=today))
-    tasks_tomorrow = list(Todo.objects.filter(date=tomorrow))
-    tasks_future = list(Todo.objects.filter(
+    todos_today = Todo.objects.filter(date=today).order_by("title")
+    todos_tomorrow = Todo.objects.filter(date=tomorrow).order_by("title")
+    todos_future = Todo.objects.filter(
         date__gt=tomorrow,
         date__month=today.month
-    ))
-
-    # Merge both model sets
-    combined_today = todos_today + tasks_today
-    combined_tomorrow = todos_tomorrow + tasks_tomorrow
-    combined_future = todos_future + tasks_future
+    ).order_by("date", "title")
 
     html = render(request, 'partials/sidebar.html', {
-        'todos_today': combined_today,
-        'todos_tomorrow': combined_tomorrow,
-        'todos_future': combined_future
+        'todos_today': todos_today,
+        'todos_tomorrow': todos_tomorrow,
+        'todos_future': todos_future,
     }).content.decode('utf-8')
 
     return JsonResponse({'html': html})
 
 
-
 @csrf_exempt
 def add_todo_from_calendar(request):
+    """
+    Create a Todo row directly from the calendar popup.
+    Expects JSON:
+      { "title", "description", "category", "date", "template_id" (optional) }
+    """
     if request.method == 'POST':
-        data = json.loads(request.body)
-        todo_type = TodoType.objects.get(id=data['todo_type'])
-        Todos.objects.create(
-            todo_type=todo_type,
-            title=data['title'],
-            description=data.get('description', ''),
-            due_date=data['due_date']
+        data = json.loads(request.body or "{}")
+
+        title = (data.get('title') or "").strip()
+        description = (data.get('description') or "").strip()
+        category = data.get('category') or "personal"
+        date_str = data.get('date')
+        template_id = data.get('template_id') or None
+
+        # Basic validation
+        if not title or not date_str:
+            return JsonResponse(
+                {'status': 'error', 'message': 'Title and date are required.'},
+                status=400
+            )
+
+        # Parse "YYYY-MM-DD" into a date
+        try:
+            year, month, day = map(int, date_str.split('-'))
+            date_obj = date_cls(year, month, day)
+        except ValueError:
+            return JsonResponse(
+                {'status': 'error', 'message': 'Invalid date format.'},
+                status=400
+            )
+
+        # Optional: link to a TaskTemplate if provided
+        template_obj = None
+        if template_id:
+            try:
+                template_obj = TaskTemplate.objects.get(id=template_id)
+                if not description and template_obj.description:
+                    description = template_obj.description
+            except TaskTemplate.DoesNotExist:
+                template_obj = None
+
+        # Create Todo in the new model
+        todo = Todo.objects.create(
+            title=title,
+            description=description,
+            date=date_obj,
+            category=category,
+            template=template_obj,
         )
-        return JsonResponse({'status': 'success'})
+
+        return JsonResponse({'status': 'success', 'id': todo.id})
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid method.'}, status=405)
 
 
 @csrf_exempt
 def update_todo(request, id):
+    """
+    Legacy updater for the old Todos model.
+    Kept for compatibility with earlier parts of the project.
+    """
     if request.method == 'POST':
         data = json.loads(request.body)
         todo = Todos.objects.get(id=id)
@@ -496,21 +473,14 @@ def update_todo(request, id):
         todo.todo_type_id = data['todo_type']
         todo.save()
         return JsonResponse({'status': 'updated'})
-    
-# @csrf_exempt
-# def update_todo_todo(request, id):
-#     if request.method == 'POST':
-#         data = json.loads(request.body)
-#         todo = get_object_or_404(Todo, id=id)
-#         todo.title = data.get("title", todo.title)
-#         todo.description = data.get("description", todo.description)
-#         todo.date = data.get("date", todo.date)
-#         todo.category = data.get("category", todo.category)
-#         todo.save()
-#         return JsonResponse({'status': 'updated'})
-    
+
+
 @csrf_exempt
 def update_todo_todo(request, id):
+    """
+    Update a Todo (new model) from the View/Edit modal on the dashboard.
+    Expects JSON: { "title", "description", "date", "category" }.
+    """
     if request.method == 'POST':
         data = json.loads(request.body)
         todo = get_object_or_404(Todo, id=id)
@@ -522,20 +492,23 @@ def update_todo_todo(request, id):
         return JsonResponse({'status': 'updated'})
 
 
-
 @csrf_exempt
 def delete_todo(request, id):
+    """
+    Legacy delete for old Todos model.
+    """
     if request.method == 'POST':
         todo = Todos.objects.get(id=id)
         todo.delete()
         return JsonResponse({'status': 'deleted'})
 
+
 @csrf_exempt
 def delete_todo_todo(request, id):
+    """
+    Delete a Todo (new model) from the dashboard modal.
+    """
     if request.method == 'POST':
         todo = get_object_or_404(Todo, id=id)
         todo.delete()
         return JsonResponse({'status': 'deleted'})
-
-
-

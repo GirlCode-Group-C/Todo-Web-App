@@ -103,7 +103,8 @@
             margin-top: 30px;
             flex-wrap: wrap;
         }
-        .left, .right {
+        .left,
+        .right {
             flex: 1;
             min-width: 280px;
         }
@@ -113,12 +114,17 @@
             border-radius: 16px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.15);
         }
+
+        /* Form elements */
         label {
             display: block;
             margin-top: 10px;
             font-size: 13px;
         }
-        .text-input, .date-input, .select-input, .textarea {
+        .text-input,
+        .date-input,
+        .select-input,
+        .textarea {
             width: 100%;
             padding: 8px;
             margin-top: 4px;
@@ -150,13 +156,16 @@
             color: #0077b6;
             font-weight: bold;
         }
+
+        /* Table preview */
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
             font-size: 13px;
         }
-        th, td {
+        th,
+        td {
             border-bottom: 1px solid #ddd;
             padding: 6px 4px;
             text-align: left;
@@ -194,49 +203,82 @@
     </p>
 
     <div class="layout">
+        <!-- Left: form to create or edit a scheduled Todo -->
         <div class="left">
             <div class="card">
                 <form method="post">
                     {% csrf_token %}
 
-{% if editing_todo_id %}
-        <input type="hidden" name="todo_id" value="{{ editing_todo_id }}">
-        <div class="message" style="color:#c00; font-weight:bold; margin-top:6px;">
-            Editing existing todo...
-        </div>
-{% endif %}
-
-
+                    {% if editing_todo_id %}
+                        <input type="hidden" name="todo_id" value="{{ editing_todo_id }}">
+                        <div class="message" style="color:#c00; font-weight:bold; margin-top:6px;">
+                            Editing existing todo...
+                        </div>
+                    {% endif %}
 
                     <label>Date</label>
-                    <input class="date-input" type="date" name="date" value="{{ previous_date }}">
+                    <input
+                        class="date-input"
+                        type="date"
+                        name="date"
+                        value="{{ previous_date }}"
+                    >
 
                     <label>Category</label>
-                    <select class="select-input" name="category" onchange="this.form.submit()">
-                        <option value="personal" {% if selected_category == 'personal' %}selected{% endif %}>Personal</option>
-                        <option value="school" {% if selected_category == 'school' %}selected{% endif %}>School</option>
-                        <option value="work" {% if selected_category == 'work' %}selected{% endif %}>Work</option>
+                    <select
+                        class="select-input"
+                        name="category"
+                        onchange="this.form.submit()"
+                    >
+                        <option value="personal"
+                            {% if selected_category == 'personal' %}selected{% endif %}
+                        >
+                            Personal
+                        </option>
+                        <option value="school"
+                            {% if selected_category == 'school' %}selected{% endif %}
+                        >
+                            School
+                        </option>
+                        <option value="work"
+                            {% if selected_category == 'work' %}selected{% endif %}
+                        >
+                            Work
+                        </option>
                     </select>
 
                     <label>Choose a suggested task (optional)</label>
                     <select class="select-input" name="template_id">
                         <option value="">-- None / I will type my own --</option>
                         {% for s in suggestions %}
-                            <option value="{{ s.id }}" {% if previous_template_id|default:'' == s.id|stringformat:"s" %}selected{% endif %}>
+                            <option
+                                value="{{ s.id }}"
+                                {% if previous_template_id|default:'' == s.id|stringformat:"s" %}selected{% endif %}
+                            >
                                 {{ s.name }}
                             </option>
                         {% endfor %}
                     </select>
 
                     <label>Or type a custom task title</label>
-                    <input class="text-input" type="text" name="custom_title"
-                           placeholder="e.g. Client meeting"
-                           value="{{ previous_custom_title }}">
+                    <input
+                        class="text-input"
+                        type="text"
+                        name="custom_title"
+                        placeholder="e.g. Client meeting"
+                        value="{{ previous_custom_title }}"
+                    >
 
                     <label>Description (optional)</label>
-                    <textarea class="textarea" name="description" placeholder="Add details if needed...">{{ previous_description }}</textarea>
+                    <textarea
+                        class="textarea"
+                        name="description"
+                        placeholder="Add details if needed..."
+                    >{{ previous_description }}</textarea>
 
-                    <button class="btn btn-primary" type="submit" name="save_todo">Save Todo</button>
+                    <button class="btn btn-primary" type="submit" name="save_todo">
+                        Save Todo
+                    </button>
 
                     {% if message %}
                         <div class="message">{{ message }}</div>
@@ -245,52 +287,69 @@
             </div>
         </div>
 
+        <!-- Right: table preview of all scheduled todos -->
         <div class="right">
             <div class="card">
                 <h3>All Scheduled Todos (preview)</h3>
+
                 {% if todos %}
                     <table>
-                        
                         <thead>
-    <tr>
-        <th>Date</th>
-        <th>Category</th>
-        <th>Title</th>
-        <th>Actions</th>
-    </tr>
-</thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Title</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
 
-
-                        
                         <tbody>
                             {% for t in todos %}
-                                
-<tr>
-    <td>{{ t.date }}</td>
-    <td>{{ t.get_category_display }}</td>
-    <td>{{ t.title }}</td>
-    <td>
-        <!-- Edit: reloads page with this todo loaded into the form -->
-        <a href="?edit_id={{ t.id }}">Edit</a>
+                                <tr>
+                                    <td>{{ t.date }}</td>
+                                    <td>{{ t.get_category_display }}</td>
+                                    <td>{{ t.title }}</td>
+                                    <td>
+                                        <!-- Edit: reloads page with this todo loaded into the form -->
+                                        <a href="?edit_id={{ t.id }}">Edit</a>
 
-        <!-- Delete: submits a small POST form -->
-        <form method="post" style="display:inline;">
-            {% csrf_token %}
-            <input type="hidden" name="todo_id" value="{{ t.id }}">
-            <button type="submit" name="delete_todo" style="background:none;border:none;color:#c00;cursor:pointer;">
-                Delete
-            </button>
-        </form>
-    </td>
-</tr>
-
-
+                                        <!-- Delete: submits a small POST form -->
+                                        <form method="post" style="display:inline;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="todo_id" value="{{ t.id }}">
+                                            <button
+                                                type="submit"
+                                                name="delete_todo"
+                                                style="background:none;border:none;color:#c00;cursor:pointer;"
+                                            >
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 {% else %}
                     <p>No todos scheduled yet.</p>
                 {% endif %}
+
+                <div style="text-align: right; margin-top: 20px;">
+                    <a
+                        href="{% url 'dashboard' %}"
+                        style="
+                            display: inline-block;
+                            padding: 10px 18px;
+                            background: #0077b6;
+                            color: #fff;
+                            text-decoration: none;
+                            border-radius: 8px;
+                            font-weight: 600;
+                        "
+                    >
+                        Continue to Dashboard →
+                    </a>
+                </div>
             </div>
         </div>
     </div>
