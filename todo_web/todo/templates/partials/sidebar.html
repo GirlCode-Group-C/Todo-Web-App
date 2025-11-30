@@ -1,0 +1,29 @@
+{% load todo_cards %}
+
+<h3>Today</h3>
+
+<div class="todo-list">
+    {% for t in todos_today %}
+        {% render_card t %}
+    {% empty %}
+        <p>No Todos for today</p>
+    {% endfor %}
+</div>
+
+<h4>Tomorrow</h4>
+<div class="todo-list">
+    {% for t in todos_tomorrow %}
+        {% render_card t %}
+    {% empty %}
+        <p>No Todos for tomorrow</p>
+    {% endfor %}
+</div>
+
+<h4>Future (This Month)</h4>
+<div class="todo-list">
+    {% for t in todos_future %}
+        {% render_card t %}
+    {% empty %}
+        <p>No future Todos</p>
+    {% endfor %}
+</div>
